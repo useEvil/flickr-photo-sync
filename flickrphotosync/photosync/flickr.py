@@ -52,7 +52,7 @@ class Flickr(object):
         taken_date = date.datetime.strptime(dates.attrib['taken'], '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
         photo = {
             'photo_id': photo_id,
-            'title': image.find('title').text,
+            'title': image.find('title').text or photo_id,
             'description': image.find('description').text,
             'taken': taken_date,
             'created_date': created_date,
