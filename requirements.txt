@@ -1,0 +1,12 @@
+pytz
+pyyaml
+hashlib
+markdown
+django
+django-filter
+djangorestframework
+django_compressor
+Fabric
+South
+Pillow
+https://bitbucket.org/useevil/flickrapi-oauth-fix/get/b39c8c985191.zip
