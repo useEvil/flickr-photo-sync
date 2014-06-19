@@ -65,10 +65,11 @@ class Command(BaseCommand):
 
     def save_photo(self, photoset, photo):
         photo = self.flickr.get_photo(photo.get('id'))
+        title = photo.get('title', photo.get('photo_id'))
         ext = photo.get('type')
         type = Photo().get_type(ext.upper())
         img, created = Photo.objects.get_or_create(
-                            title=photo.get('title'),
+                            title=title,
                             slug=photo.get('photo_id'),
                             photoset=photoset,
                             defaults={
@@ -76,11 +77,11 @@ class Command(BaseCommand):
                                 'created_date': photo.get('taken'),
                                 'modified_by': self.user,
                                 'modified_date': date.datetime.now(pytz.utc),
-                                'description': "{0}: {1}".format(photo.get('description', photoset.title), photo.get('title')),
+                                'description': "{0}: {1}".format(photo.get('description', photoset.title), title),
                                 'farm': photo.get('farm'),
                                 'server': photo.get('server'),
                                 'full_path': photo.get('full_path'),
-                                'file_name': '{0}.{1}'.format(photo.get('title'), ext),
+                                'file_name': '{0}.{1}'.format(title, ext),
                                 'type': type
 #                                 'width': width,
 #                                 'height': height,
