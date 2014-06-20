@@ -14,7 +14,6 @@ from flickrphotosync.photosync.flickr import Flickr
 class Command(BaseCommand):
     args = '<photodir photodir ...>'
     help = 'Rename photos from a local photo directory'
-    prefix = ''
     flickr = Flickr()
     user = User.objects.get(pk=1)
 
@@ -24,7 +23,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        self.prefix = options['prefix']
+        self.prefix = options.get('prefix')
         for photoset in args:
             try:
                 self.get_photoset(int(photoset))

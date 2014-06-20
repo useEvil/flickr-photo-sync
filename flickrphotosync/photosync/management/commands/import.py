@@ -21,14 +21,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        if options['all']:
+        if options.get('all'):
             self.import_flickr_photosets()
         else:
             for photoset_id in args:
                 try:
                     self.import_flickr_photosets(int(photoset_id))
                 except PhotoSet.DoesNotExist:
-                    raise CommandError('PhotoSet "%s" does not exist' % photoset)
+                    raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
 
     def import_flickr_photosets(self, photoset_id=None):
         for photoset in self.flickr.get_photosets(photoset_id):
@@ -39,10 +39,10 @@ class Command(BaseCommand):
                     if img_created:
                         set.total = set.total + 1
                         set.save()
-            self.stdout.write('Successfully imported PhotoSet "%s"' % photoset.find('title').text)
+            self.stdout.write('Successfully imported PhotoSet "{0}"'.format(photoset.find('title').text))
 
     def save_photoset(self, photoset):
-        url = self.flickr.url + self.flickr.username
+        url = self.flickr.url + self.flickr.username.format(self.user.username)
         created_date = date.datetime.fromtimestamp(int(photoset.attrib['date_create']), tz=pytz.utc)
         modified_date = date.datetime.fromtimestamp(int(photoset.attrib['date_update']), tz=pytz.utc)
         set, created = PhotoSet.objects.get_or_create(

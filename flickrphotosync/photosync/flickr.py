@@ -64,8 +64,24 @@ class Flickr(object):
         }
         return photo
 
+    def get_photo_size(self, photo_id, label='Original'):
+        result = self.api.photos.getSizes(photo_id=photo_id)
+        query = ".//sizes/size[@label='{0}']".format(label)
+        size = {
+            'photo_id': photo_id,
+            'width': result.find(query).attrib['width'],
+            'height': result.find(query).attrib['height'],
+            'source': result.find(query).attrib['source'],
+            'url': result.find(query).attrib['url'],
+        }
+        return size
+
     def get_photo_url(self, slug):
         return url(slug)
+
+    def set_photo_info(self, photo):
+        result = self.api.photos.setMeta(photo_id=photo.slug, title=photo.title, description=photo.description)
+        return result
 
     def create_photoset(self, photoset):
         params = {
