@@ -16,11 +16,19 @@ class PhotoSetListFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             ('no_size_info', _('Missing Size Info')),
+            ('no_server_info', _('Missing Server Info')),
+            ('no_farm_info', _('Missing Farm Info')),
         )
     def queryset(self, request, queryset):
         query = request.GET.get('q') or ''
         if self.value() == 'no_size_info':
             results = Photo.objects.filter(width=0, height=0).values_list('photoset__slug', flat=True).distinct()
+            return queryset.filter(slug__in=results).all()
+        elif self.value() == 'no_server_info':
+            results = Photo.objects.filter(server=0).values_list('photoset__slug', flat=True).distinct()
+            return queryset.filter(slug__in=results).all()
+        elif self.value() == 'no_farm_info':
+            results = Photo.objects.filter(farm=0).values_list('photoset__slug', flat=True).distinct()
             return queryset.filter(slug__in=results).all()
         else:
             return queryset.all()
