@@ -6,14 +6,24 @@ from forms import PhotoSetForm
 # Register your models here.
 class PhotoAdmin(admin.ModelAdmin):
 
-    # create a link for the student name
+    # create a link for the photo on flickr
     def full_path_link(obj):
-        return '<a href="%s" class="nowrap" style="font-weight: bold;font-size: 12px;" target="_photo">%s</a>' % (obj.full_path, obj.full_path)
+        return '<a href="{0}" class="nowrap" style="font-weight: bold;font-size: 12px;" target="_photo">{1}</a>'.format(obj.full_path, obj.full_path)
     full_path_link.allow_tags = True
     full_path_link.short_description = "Full Path"
 
-    list_display = ['title', 'slug', full_path_link, 'created_date']
-    search_fields = ['title', 'file_name', 'slug']
+    def size_info(obj):
+        return '{0}x{1}'.format(obj.width, obj.height)
+    size_info.allow_tags = True
+    size_info.short_description = "Size"
+
+    def server_info(obj):
+        return '{0}-{1}'.format(obj.farm, obj.server)
+    server_info.allow_tags = True
+    server_info.short_description = "Farm-Server"
+
+    list_display = ['title', 'photoset', 'slug', size_info, server_info, full_path_link, 'created_date']
+    search_fields = ['title', 'photoset__title', 'photoset__description', 'file_name', 'slug']
 
 class PhotoInline(admin.TabularInline):
     model = Photo
@@ -30,7 +40,7 @@ class PhotoSetAdmin(admin.ModelAdmin):
     full_path_link.short_description = "Slug"
 
     list_display = ['title', 'total', full_path_link, 'created_date']
-    search_fields = ['title', 'slug']
+    search_fields = ['title', 'description', 'slug']
     inlines = [PhotoInline]
 
 class PhotoSetInline(admin.TabularInline):
@@ -40,7 +50,7 @@ class PhotoSetInline(admin.TabularInline):
 
 class CollectionAdmin(admin.ModelAdmin):
     list_display = ['title', 'slug', 'created_date']
-    search_fields = ['title', 'slug']
+    search_fields = ['title', 'description', 'slug']
     inlines = [PhotoSetInline]
 
 

@@ -20,15 +20,15 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        if options['verify']:
-            auth_props = self.flickr.api.get_auth_tokens(options['oauth_verifier'])
+        if options.get('verify'):
+            auth_props = self.flickr.api.get_auth_tokens(options.get('oauth_verifier'))
             print '==== auth_props [{0}]'.format(auth_props)
         else:
             auth_props = self.flickr.api.get_authentication_tokens("write")
-            auth_url = auth_props['auth_url']
+            auth_url = auth_props.get('auth_url')
 
             # Store this token in a session or something for later use in the next step.
-            oauth_token = auth_props['oauth_token']
+            oauth_token = auth_props.get('oauth_token')
             oauth_token_secret = auth_props['oauth_token_secret']
             print '==== oauth_token [{0}]'.format(oauth_token)
             print '==== oauth_token_secret [{0}]'.format(oauth_token_secret)

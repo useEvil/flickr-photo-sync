@@ -31,7 +31,7 @@ class PhotoSet(ModifiedDate):
     collection = models.ForeignKey(Collection, blank=True, null=True, related_name='photosets')
 
     def __unicode__(self):
-        return self.title
+        return '{0} [{1}]'.format(self.title, self.slug)
 
 
 class Photo(ModifiedDate):
@@ -57,6 +57,14 @@ class Photo(ModifiedDate):
 
     def __unicode__(self):
         return self.title
+
+    @property
+    def size(self):
+        return '{0}x{1}'.format(self.width, self.height)
+
+    @property
+    def server_info(self):
+        return '{0}-{1}'.format(self.farm, self.server)
 
     def get_type(self, type):
         d = dict(self.IMAGE_TYPES)

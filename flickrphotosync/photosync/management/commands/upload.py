@@ -24,15 +24,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        if options['all']:
-            self.get_directory_listing(settings.PHOTO_DIR)
+        if options.get('all'):
+            photo_dir = settings.PHOTO_DIR.format(self.user.username)
+            self.get_directory_listing(photo_dir)
         else:
             for photoset in args:
                 try:
                     self.get_directory_listing(photoset)
-                    self.stdout.write('Successfully Uploaded PhotoSet "%s"' % photoset)
+                    self.stdout.write('Successfully Uploaded PhotoSet "{0}"'.format(photoset))
                 except PhotoSet.DoesNotExist:
-                    raise CommandError('PhotoSet "%s" does not exist' % photoset)
+                    raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
 
     def get_directory_listing(self, directory):
         for dirname, dirnames, filenames in os.walk(directory):
@@ -65,7 +66,6 @@ class Command(BaseCommand):
                             photoset.save()
 
     def get_photoset(self, dirname):
-        url = self.flickr.url + self.flickr.username
         dir = os.path.basename(dirname)
         created_date = date.datetime.fromtimestamp(os.path.getctime(dirname), tz=pytz.utc)
         modified_date = date.datetime.fromtimestamp(os.path.getmtime(dirname), tz=pytz.utc)
@@ -76,6 +76,7 @@ class Command(BaseCommand):
                                 'created_date': created_date,
                                 'modified_by': self.user,
                                 'modified_date': modified_date,
+                                'description': dir,
                             }
                         )
         if created:
@@ -123,7 +124,7 @@ class Command(BaseCommand):
     def create_thumbnail(self, dirname, filename, create=False):
         full_path = os.path.join(dirname, filename)
         print '==== Creating Thumbnail [{0}]'.format(full_path)
-        image = Image.open(file_path)
+        image = Image.open(full_path)
         if create:
             image.thumbnail(settings.THUMB_SIZE, Image.ANTIALIAS)
         return image.size
