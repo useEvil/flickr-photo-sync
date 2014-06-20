@@ -32,9 +32,13 @@ class Command(BaseCommand):
 
     def import_flickr_photosets(self, photoset_id=None):
         for photoset in self.flickr.get_photosets(photoset_id):
-            set, created = self.save_photoset(photoset)
-            for photo in self.flickr.get_photos_from_photoset(set.slug):
-                img, created = self.save_photo(set, photo)
+            set, set_created = self.save_photoset(photoset)
+            if set.total != photoset.attrib['photos'] or set_created:
+                for photo in self.flickr.get_photos_from_photoset(set.slug):
+                    img, img_created = self.save_photo(set, photo)
+                    if img_created:
+                        set.total = set.total + 1
+                        set.save()
             self.stdout.write('Successfully imported PhotoSet "%s"' % photoset.find('title').text)
 
     def save_photoset(self, photoset):
@@ -52,7 +56,6 @@ class Command(BaseCommand):
                                 'farm': photoset.attrib['server'],
                                 'primary': photoset.attrib['primary'],
                                 'description': photoset.find('description').text,
-                                'total': photoset.attrib['photos'],
                                 'full_path': '{0}/sets/{1}'.format(url, photoset.attrib['id'])
                             }
                         )
@@ -83,8 +86,6 @@ class Command(BaseCommand):
                                 'full_path': photo.get('full_path'),
                                 'file_name': '{0}.{1}'.format(title, ext),
                                 'type': type
-#                                 'width': width,
-#                                 'height': height,
                             }
                         )
         if created:
