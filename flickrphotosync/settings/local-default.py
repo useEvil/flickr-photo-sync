@@ -9,6 +9,7 @@ FLICKR_FILENAME = 'tokens/{0}.token'
 FLICKR_THUMBNAILS = 'media/thumbnails'
 
 PHOTO_DIR = '/Volumes/{0}/Pictures'
+PHOTO_DOWNLOAD_DIR = '/Volumes/{0}/Downloads/Images'
 PHOTO_THUMB_SIZE = 128, 128
 
 LOGGING = {

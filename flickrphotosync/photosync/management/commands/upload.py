@@ -1,4 +1,5 @@
 import os
+import sys
 import pytz
 import datetime as date
 
@@ -19,14 +20,46 @@ class Command(BaseCommand):
 
     option_list = BaseCommand.option_list + (
         make_option('--all', action='store_true', dest='all', default=False, help='Retrieve all photosets'),
-        make_option('--public', action='store_true', dest='public', default=False, help='Set privacy to public'),
+        make_option('--dry', action='store_true', dest='dry', default=False, help='Only do a dry run'),
+        make_option('--public', action='store_true', dest='public', default=0, help='Set privacy to public'),
+        make_option('--validate', action='store_true', dest='validate', default=0, help='Set privacy to public'),
+        make_option('--directory', action='store', dest='directory', default=False, help='Match this directory'),
     )
 
     def handle(self, *args, **options):
 
+        for key in ['all', 'dry', 'public', 'directory', 'validate']:
+            setattr(self, key, options.get(key))
+
         if options.get('all'):
             photo_dir = settings.PHOTO_DIR.format(self.user.username)
             self.get_directory_listing(photo_dir)
+        elif options.get('validate'):
+            for photoset in args:
+                try:
+                    photoset = PhotoSet.objects.get(slug=photoset)
+                    print '==== Processing PhotoSet [{0}]'.format(photoset)
+                    for photo in photoset.photos.all():
+                        img = self.flickr.get_photo(photo.slug)
+                        try:
+                            self.flickr.add_photo_to_photoset(photo, photoset)
+                            print '==== Adding Photo to PhotoSet [{0}]'.format(photo)
+                        except Exception, e:
+                            print '==== Photo already in PhotoSet [{0}]'.format(photo)
+                    self.stdout.write('Successfully Validated PhotoSet "{0}"'.format(photoset))
+                except PhotoSet.DoesNotExist:
+                    raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
+        elif options.get('directory'):
+            photo_dir = settings.PHOTO_DIR.format(self.user.username)
+            for dirname, dirnames, filenames in os.walk(photo_dir):
+                try:
+                    index = dirnames.index(self.directory)
+                    if index:
+                        full_path = os.path.join(dirname, dirnames[index])
+                        self.get_directory_listing(full_path)
+                        return
+                except:
+                    pass
         else:
             for photoset in args:
                 try:
@@ -44,29 +77,40 @@ class Command(BaseCommand):
                 if name in dirnames:
                     dirnames.remove(name)
 
-            total = len(filenames)
-            if total:
+            self.total = len(filenames)
+            if self.total:
                 photoset, set_created = self.get_photoset(dirname)
-                primary = None
-                if photoset.total != total or set_created:
-                    for filename in filenames:
-                        ext = os.path.splitext(filename)[1][1:]
-                        ext_type = Photo().get_type(ext.upper())
-                        if type(ext_type) is int:
-                            photo, img_created = self.save_photo(photoset, dirname, filename)
-                            if not primary and set_created:
-                                primary = photo
-                                photoset.primary = primary.slug
-                                set = self.flickr.create_photoset(photoset)
-                                photoset.slug = set.get('photoset_id')
-                                photoset.full_path = set.get('url')
-                            else:
-                                self.flickr.add_photo_to_photoset(photo, photoset)
-                            photoset.total = photoset.total + 1
-                            photoset.save()
+                if not self.dry:
+                    primary = None
+                    if photoset.total < self.total or set_created:
+                        print '==== photoset [{0}]'.format(photoset)
+                        for filename in filenames:
+                            ext = os.path.splitext(filename)[1][1:]
+                            ext_type = Photo().get_type(ext.upper())
+                            if type(ext_type) is int:
+                                photo, img_created = self.save_photo(photoset, dirname, filename, set_created)
+                                if not primary and set_created:
+                                    primary = photo
+                                    photoset.primary = primary.slug
+                                    set = self.flickr.create_photoset(photoset)
+                                    photoset.slug = set.get('photoset_id')
+                                    photoset.full_path = set.get('url')
+                                    photoset.total = photoset.total + 1
+                                elif img_created:
+                                    self.flickr.add_photo_to_photoset(photo, photoset)
+                                    photoset.total = photoset.total + 1
+                                else:
+                                    pass
+                                photoset.save()
 
     def get_photoset(self, dirname):
         dir = os.path.basename(dirname)
+        if self.dry:
+            try:
+                photoset = PhotoSet.objects.get(title=dir)
+            except:
+                print '==== Photoset not found in database [{0}][{1}]'.format(dir, self.total)
+            return None, None
         created_date = date.datetime.fromtimestamp(os.path.getctime(dirname), tz=pytz.utc)
         modified_date = date.datetime.fromtimestamp(os.path.getmtime(dirname), tz=pytz.utc)
         photoset, created = PhotoSet.objects.get_or_create(
@@ -80,13 +124,13 @@ class Command(BaseCommand):
                             }
                         )
         if created:
-            print '==== Creating Photoset [{0}]'.format(dirname)
+            print '==== Creating Photoset [{0}][{1}]'.format(dirname, self.total)
             photoset.created_date = created_date
             photoset.modified_date = modified_date
             photoset.save()
         return photoset, created
 
-    def save_photo(self, photoset, dirname, filename):
+    def save_photo(self, photoset, dirname, filename, set_created):
         full_path = os.path.join(dirname, filename)
         created_date = date.datetime.fromtimestamp(os.path.getctime(full_path), tz=pytz.utc)
         modified_date = date.datetime.fromtimestamp(os.path.getmtime(full_path), tz=pytz.utc)
@@ -94,37 +138,61 @@ class Command(BaseCommand):
         ext = os.path.splitext(filename)[1][1:]
         type = Photo().get_type(ext.upper())
         width, height = self.create_thumbnail(dirname, filename)
-        photo, created = Photo.objects.get_or_create(
-                            file_name=filename,
-                            defaults={
-                                'created_by': self.user,
-                                'created_date': created_date,
-                                'modified_by': self.user,
-                                'modified_date': modified_date,
-                                'title': title,
-                                'description': "{0}: {1}".format(photoset.title, title),
-                                'type': type,
-                                'full_path': full_path,
-                                'width': width,
-                                'height': height,
-                                'photoset': photoset,
-                            }
-                        )
+        if set_created:
+            photo = Photo.objects.create(
+                        file_name=filename,
+                        created_by=self.user,
+                        created_date=created_date,
+                        modified_by=self.user,
+                        modified_date=modified_date,
+                        title=title,
+                        description="{0}: {1}".format(photoset.title, title),
+                        type=type,
+                        full_path=full_path,
+                        width=width,
+                        height=height,
+                        photoset=photoset,
+                    )
+            created = True
+        else:
+            try:
+                photo, created = Photo.objects.get_or_create(
+                                file_name=filename,
+                                defaults={
+                                    'created_by': self.user,
+                                    'created_date': created_date,
+                                    'modified_by': self.user,
+                                    'modified_date': modified_date,
+                                    'title': title,
+                                    'description': "{0}: {1}".format(photoset.title, title),
+                                    'type': type,
+                                    'full_path': full_path,
+                                    'width': width,
+                                    'height': height,
+                                    'photoset': photoset,
+                                }
+                            )
+            except Exception, e:
+                print '==== Exception [{0}]'.format(e)
+                print '==== filename [{0}]'.format(filename)
+                return None, None
         if created or not photo.slug:
             print '==== Uploading Photo [{0}]'.format(filename)
-            photo_id = self.flickr.upload_photo(photo, 1)
+            photo_id = self.flickr.upload_photo(photo, self.public)
             img = self.flickr.get_photo(photo_id)
-            photo.full_path = img.get('url')
+            photo.full_path = img.get('full_path')
             photo.created_date = img.get('taken')
             photo.modified_date = modified_date
+            photo.farm = img.get('farm')
+            photo.server = img.get('server')
             photo.slug = photo_id
             photo.save()
         return photo, created
 
     def create_thumbnail(self, dirname, filename, create=False):
         full_path = os.path.join(dirname, filename)
-        print '==== Creating Thumbnail [{0}]'.format(full_path)
         image = Image.open(full_path)
         if create:
+            print '==== Creating Thumbnail [{0}]'.format(filename)
             image.thumbnail(settings.THUMB_SIZE, Image.ANTIALIAS)
         return image.size

@@ -12,24 +12,19 @@ class Command(BaseCommand):
     flickr = Flickr()
 
     option_list = BaseCommand.option_list + (
-        make_option('--flickrapi', action='store_true', dest='flickrapi', default=False, help='Use FlickrAPI'),
-        make_option('--flickr_api', action='store_true', dest='flickr_api', default=False, help='Use Flickr_API'),
         make_option('--verify', action='store_true', dest='verify', default=False, help='Verify FlickrAPI OAuth Tokens'),
         make_option('--oauth_token', action='store', dest='oauth_token', default=False, help='FlickrAPI OAuth Token'),
         make_option('--oauth_verifier', action='store', dest='oauth_verifier', default=False, help='FlickrAPI OAuth Verifier'),
+        make_option('--perms', action='store', dest='perms', default="write", help='FlickrAPI OAuth Permissions'),
     )
 
     def handle(self, *args, **options):
+
+        for key in ['verify', 'oauth_token', 'oauth_verifier', 'perms']:
+            setattr(self, key, options.get(key))
+
         if options.get('verify'):
-            auth_props = self.flickr.api.get_auth_tokens(options.get('oauth_verifier'))
+            auth_props = self.flickr.api.get_auth_tokens(self.oauth_verifier)
             print '==== auth_props [{0}]'.format(auth_props)
         else:
-            auth_props = self.flickr.api.get_authentication_tokens("write")
-            auth_url = auth_props.get('auth_url')
-
-            # Store this token in a session or something for later use in the next step.
-            oauth_token = auth_props.get('oauth_token')
-            oauth_token_secret = auth_props['oauth_token_secret']
-            print '==== oauth_token [{0}]'.format(oauth_token)
-            print '==== oauth_token_secret [{0}]'.format(oauth_token_secret)
-            print 'Connect with Flickr via: {0}'.format(auth_url)
+            self.flickr.api.authenticate_via_browser(perms=self.perms)

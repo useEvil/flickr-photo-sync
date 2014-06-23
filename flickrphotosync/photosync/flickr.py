@@ -83,6 +83,18 @@ class Flickr(object):
         result = self.api.photos.setMeta(photo_id=photo.slug, title=photo.title, description=photo.description)
         return result
 
+    def set_photoset_info(self, photoset):
+        result = self.api.photosets.editMeta(photoset_id=photoset.slug, title=photoset.title, description=photoset.description)
+        return result
+
+    def delete_photo(self, photo):
+        result = self.api.photos.delete(photo_id=photo.slug)
+        return result
+
+    def delete_photoset(self, photoset):
+        result = self.api.photosets.delete(photoset_id=photoset.slug)
+        return result
+
     def create_photoset(self, photoset):
         params = {
             'title': photoset.title,
@@ -105,7 +117,7 @@ class Flickr(object):
         params = {
             'filename': photo.full_path,
             'title': photo.title,
-            'description': photo.title,
+            'description': photo.description,
             'is_public': is_public,
             'is_family': 1,
             'is_friend': 1
