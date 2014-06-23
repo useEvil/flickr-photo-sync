@@ -4,6 +4,7 @@ import datetime as date
 from django.db import models
 
 from flickrphotosync.mixins.models import ModifiedDate
+from flickrphotosync.photosync.flickr import Flickr
 
 # Create your models here.
 class Collection(ModifiedDate):
@@ -33,6 +34,17 @@ class PhotoSet(ModifiedDate):
     def __unicode__(self):
         return '{0} [{1}]'.format(self.title, self.slug)
 
+    def save(self, *args, **kwargs):
+        if self.slug:
+            Flickr().set_photoset_info(self)
+        return super(PhotoSet, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        Flickr().delete_photoset(self)
+        for photo in self.photos.all():
+            photo.delete(delete_set=True)
+        return super(PhotoSet, self).delete(*args, **kwargs)
+
 
 class Photo(ModifiedDate):
 
@@ -47,6 +59,7 @@ class Photo(ModifiedDate):
     slug = models.CharField(max_length=250)
     file_name = models.CharField(max_length=500)
     full_path = models.CharField(max_length=1000)
+#     full_uri = models.CharField(max_length=1000)
     width = models.PositiveIntegerField(blank=False, default=0)
     height = models.PositiveIntegerField(blank=False, default=0)
     type = models.PositiveIntegerField(blank=False, default=0, choices=IMAGE_TYPES)
@@ -65,6 +78,22 @@ class Photo(ModifiedDate):
     @property
     def server_info(self):
         return '{0}-{1}'.format(self.farm, self.server)
+
+    def save(self, *args, **kwargs):
+        if self.slug:
+            Flickr().set_photo_info(self)
+        return super(Photo, self).save(*args, **kwargs)
+
+## override delete functionality to remove photo from Flickr as well
+## requires delete permissions
+    def delete(self, *args, **kwargs):
+        Flickr().delete_photo(self)
+        if kwargs.get('delete_set', False) is False:
+            self.photoset.total = self.photoset.total - 1
+            self.photoset.save()
+        else:
+            del kwargs['delete_set']
+        return super(Photo, self).delete(*args, **kwargs)
 
     def get_type(self, type):
         d = dict(self.IMAGE_TYPES)

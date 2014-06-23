@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from models import Photo, PhotoSet, Collection
 from forms import PhotoSetForm
+from actions import delete_selected_from_flickr
 
 # Register your models here.
 class PhotoSetListFilter(admin.SimpleListFilter):
@@ -53,7 +54,9 @@ class PhotoAdmin(admin.ModelAdmin):
     server_info.short_description = "Farm-Server"
 
     list_display = ['title', 'photoset', 'slug', size_info, server_info, full_path_link, 'created_date']
-    search_fields = ['title', 'photoset__title', 'photoset__description', 'file_name', 'slug']
+    search_fields = ['title', 'photoset__title', 'photoset__description', 'photoset__slug', 'file_name', 'slug']
+    actions = [delete_selected_from_flickr]
+    save_on_top = True
 
 
 class PhotoInline(admin.TabularInline):
@@ -71,10 +74,13 @@ class PhotoSetAdmin(admin.ModelAdmin):
     full_path_link.allow_tags = True
     full_path_link.short_description = "Slug"
 
-    list_display = ['title', 'total', full_path_link, 'created_date']
-    search_fields = ['title', 'description', 'slug']
+    list_display = ['id', 'title', 'total', full_path_link, 'created_date']
+    list_editable = ['title']
     list_filter = [PhotoSetListFilter]
+    search_fields = ['title', 'description', 'slug']
+    actions = [delete_selected_from_flickr]
     inlines = [PhotoInline]
+    save_on_top = True
 
 
 class PhotoSetInline(admin.TabularInline):
@@ -87,6 +93,7 @@ class CollectionAdmin(admin.ModelAdmin):
     list_display = ['title', 'slug', 'created_date']
     search_fields = ['title', 'description', 'slug']
     inlines = [PhotoSetInline]
+    save_on_top = True
 
 
 admin.site.register(Photo, PhotoAdmin)

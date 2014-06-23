@@ -5,17 +5,15 @@ import datetime as date
 from PIL import Image
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from django.contrib.auth.models import User
 from django.conf import settings
 
 from flickrphotosync.photosync.models import Photo, PhotoSet, Collection
 from flickrphotosync.photosync.flickr import Flickr
 
 class Command(BaseCommand):
-    args = '<photodir photodir ...>'
+    args = '<photoset photoset ...>'
     help = 'Rename photos from a local photo directory'
     flickr = Flickr()
-    user = User.objects.get(pk=1)
 
     option_list = BaseCommand.option_list + (
         make_option('--prefix', action='store', dest='prefix', default=False, help='Prefix to add to file name'),
