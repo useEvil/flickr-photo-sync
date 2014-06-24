@@ -38,14 +38,15 @@ class Command(BaseCommand):
             for photoset in args:
                 try:
                     photoset = PhotoSet.objects.get(slug=photoset)
-                    print '==== Processing PhotoSet [{0}]'.format(photoset)
+                    self.stdout.write('==== Processing PhotoSet [{0}]'.format(photoset))
                     for photo in photoset.photos.all():
                         img = self.flickr.get_photo(photo.slug)
                         try:
                             self.flickr.add_photo_to_photoset(photo, photoset)
-                            print '==== Adding Photo to PhotoSet [{0}]'.format(photo)
+                            self.stdout.write('==== Adding Photo to PhotoSet [{0}]'.format(photo))
                         except Exception, e:
-                            print '==== Photo already in PhotoSet [{0}]'.format(photo)
+                            context = self.flickr.get_photo_context(photo)
+                            self.stdout.write('==== Photo already in PhotoSet [{0}][{1}][{2}]'.format(photo, context.get('title'), context.get('photoset_id')))
                     self.stdout.write('Successfully Validated PhotoSet "{0}"'.format(photoset))
                 except PhotoSet.DoesNotExist:
                     raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
@@ -83,22 +84,28 @@ class Command(BaseCommand):
                 if not self.dry:
                     primary = None
                     if photoset.total < self.total or set_created:
-                        print '==== photoset [{0}]'.format(photoset)
+                        self.stdout.write('==== photoset [{0}]'.format(photoset))
                         for filename in filenames:
                             ext = os.path.splitext(filename)[1][1:]
                             ext_type = Photo().get_type(ext.upper())
                             if type(ext_type) is int:
-                                photo, img_created = self.save_photo(photoset, dirname, filename, set_created)
+                                photo, img_created, img_uploaded = self.save_photo(photoset, dirname, filename, set_created)
                                 if not primary and set_created:
-                                    primary = photo
-                                    photoset.primary = primary.slug
-                                    set = self.flickr.create_photoset(photoset)
-                                    photoset.slug = set.get('photoset_id')
-                                    photoset.full_path = set.get('url')
-                                    photoset.total = photoset.total + 1
-                                elif img_created:
-                                    self.flickr.add_photo_to_photoset(photo, photoset)
-                                    photoset.total = photoset.total + 1
+                                    try:
+                                        primary = photo
+                                        photoset.primary = primary.slug
+                                        set = self.flickr.create_photoset(photoset)
+                                        photoset.slug = set.get('photoset_id')
+                                        photoset.full_path = set.get('url')
+                                        photoset.total = photoset.total + 1
+                                    except Exception, e:
+                                        self.stdout.write('==== Failed to create PhotoSet [{0}]'.format(photoset))
+                                elif img_created or img_uploaded:
+                                    try:
+                                        self.flickr.add_photo_to_photoset(photo, photoset)
+                                        photoset.total = photoset.total + 1
+                                    except Exception, e:
+                                        self.stdout.write('==== Failed to add Photo to PhotoSet [{0}][{1}]'.format(photo, photoset))
                                 else:
                                     pass
                                 photoset.save()
@@ -109,7 +116,7 @@ class Command(BaseCommand):
             try:
                 photoset = PhotoSet.objects.get(title=dir)
             except:
-                print '==== Photoset not found in database [{0}][{1}]'.format(dir, self.total)
+                self.stdout.write('==== Photoset not found in database [{0}][{1}]'.format(dir, self.total))
             return None, None
         created_date = date.datetime.fromtimestamp(os.path.getctime(dirname), tz=pytz.utc)
         modified_date = date.datetime.fromtimestamp(os.path.getmtime(dirname), tz=pytz.utc)
@@ -124,7 +131,7 @@ class Command(BaseCommand):
                             }
                         )
         if created:
-            print '==== Creating Photoset [{0}][{1}]'.format(dirname, self.total)
+            self.stdout.write('==== Creating Photoset [{0}][{1}]'.format(dirname, self.total))
             photoset.created_date = created_date
             photoset.modified_date = modified_date
             photoset.save()
@@ -138,6 +145,8 @@ class Command(BaseCommand):
         ext = os.path.splitext(filename)[1][1:]
         type = Photo().get_type(ext.upper())
         width, height = self.create_thumbnail(dirname, filename)
+        uploaded = False
+        created = False
         if set_created:
             photo = Photo.objects.create(
                         file_name=filename,
@@ -173,12 +182,17 @@ class Command(BaseCommand):
                                 }
                             )
             except Exception, e:
-                print '==== Exception [{0}]'.format(e)
-                print '==== filename [{0}]'.format(filename)
-                return None, None
+                self.stdout.write('==== Exception [{0}]'.format(e))
+                self.stdout.write('==== filename [{0}]'.format(filename))
+                return None, False, False
         if created or not photo.slug:
-            print '==== Uploading Photo [{0}]'.format(filename)
-            photo_id = self.flickr.upload_photo(photo, self.public)
+            self.stdout.write('==== Uploading Photo [{0}]'.format(filename))
+            try:
+                photo_id = self.flickr.upload_photo(photo, self.public)
+                uploaded = True
+            except Exception, e:
+                self.stdout.write('==== Failed to Upload Photo [{0}]'.format(filename))
+                return None, False, False
             img = self.flickr.get_photo(photo_id)
             photo.full_path = img.get('full_path')
             photo.created_date = img.get('taken')
@@ -187,12 +201,12 @@ class Command(BaseCommand):
             photo.server = img.get('server')
             photo.slug = photo_id
             photo.save()
-        return photo, created
+        return photo, created, uploaded
 
     def create_thumbnail(self, dirname, filename, create=False):
         full_path = os.path.join(dirname, filename)
         image = Image.open(full_path)
         if create:
-            print '==== Creating Thumbnail [{0}]'.format(filename)
+            self.stdout.write('==== Creating Thumbnail [{0}]'.format(filename))
             image.thumbnail(settings.THUMB_SIZE, Image.ANTIALIAS)
         return image.size

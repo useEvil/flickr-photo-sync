@@ -46,7 +46,7 @@ class Command(BaseCommand):
                     raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
 
     def get_photoset(self, photoset):
-        print '==== Processing PhotoSet [{0}][{1}]'.format(photoset.title, photoset.slug)
+        self.stdout.write('==== Processing PhotoSet [{0}][{1}]'.format(photoset.title, photoset.slug))
         set in self.flickr.get_photoset(photoset.slug):
         if photoset.total < set.attrib['photos']:
             for photo in photoset.photos:

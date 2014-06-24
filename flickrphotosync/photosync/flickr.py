@@ -83,6 +83,14 @@ class Flickr(object):
         result = self.api.photos.setMeta(photo_id=photo.slug, title=photo.title, description=photo.description)
         return result
 
+    def get_photo_context(self, photo):
+        result = self.api.photos.getAllContexts(photo_id=photo.slug)
+        context = {
+            'photoset_id': result.find(".//set").attrib['id'],
+            'title': result.find(".//set").attrib['title'],
+        }
+        return context
+
     def set_photoset_info(self, photoset):
         result = self.api.photosets.editMeta(photoset_id=photoset.slug, title=photoset.title, description=photoset.description)
         return result

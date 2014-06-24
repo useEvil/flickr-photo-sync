@@ -60,7 +60,7 @@ class Command(BaseCommand):
                             }
                         )
         if created:
-            print '==== Creating Photoset [{0}][{1}]'.format(set.title, set.slug)
+            self.stdout.write('==== Creating Photoset [{0}][{1}]'.format(set.title, set.slug))
             set.created_date = created_date
             set.modified_date = modified_date
             set.save()
@@ -89,7 +89,7 @@ class Command(BaseCommand):
                             }
                         )
         if created:
-            print '==== Importing Photo [{0}][{1}]'.format(img.title, img.full_path)
+            self.stdout.write('==== Importing Photo [{0}][{1}]'.format(img.title, img.full_path))
             img.created_date = photo.get('taken')
             img.save()
         return img, created

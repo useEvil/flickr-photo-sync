@@ -31,9 +31,9 @@ class Command(BaseCommand):
 
     def get_photoset(self, photoset_id):
         photoset = PhotoSet.objects.get(slug=photoset_id)
-        print '==== Processing PhotoSet [{0}]'.format(photoset.title)
+        self.stdout.write('==== Processing PhotoSet [{0}]'.format(photoset.title))
         for photo in photoset.photos.all():
-            print '==== Renaming Photo [{0}]'.format(photo.title)
+            self.stdout.write('==== Renaming Photo [{0}]'.format(photo.title))
             size = self.flickr.get_photo_size(photo.slug, 'Original')
             photo.title = '{0}_{1}'.format(self.prefix, photo.title)
             photo.file_name = '{0}_{1}'.format(self.prefix, photo.file_name)
