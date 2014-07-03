@@ -23,33 +23,43 @@ class Command(BaseCommand):
         make_option('--dry', action='store_true', dest='dry', default=False, help='Only do a dry run'),
         make_option('--public', action='store_true', dest='public', default=0, help='Set privacy to public'),
         make_option('--validate', action='store_true', dest='validate', default=0, help='Set privacy to public'),
+        make_option('--replace', action='store_true', dest='replace', default=0, help='Replace photoset list with local file list'),
         make_option('--directory', action='store', dest='directory', default=False, help='Match this directory'),
     )
 
     def handle(self, *args, **options):
 
-        for key in ['all', 'dry', 'public', 'directory', 'validate']:
-            setattr(self, key, options.get(key))
+        for key in ['all', 'dry', 'public', 'directory', 'validate', 'replace']:
+            setattr(self, key, options.get(key, None))
 
         if options.get('all'):
             photo_dir = settings.PHOTO_DIR.format(self.user.username)
             self.get_directory_listing(photo_dir)
-        elif options.get('validate'):
-            for photoset in args:
+        elif options.get('replace'):
+            for slug in args:
                 try:
-                    photoset = PhotoSet.objects.get(slug=photoset)
+                    photoset = PhotoSet.objects.get(slug=slug)
+                    self.stdout.write('==== Processing PhotoSet [{0}]'.format(photoset))
+                    self.flickr.set_photoset_list(photoset)
+                    self.stdout.write('Successfully Replaced PhotoSet "{0}"'.format(photoset))
+                except PhotoSet.DoesNotExist:
+                    raise CommandError('PhotoSet "{0}" does not exist'.format(slug))
+        elif options.get('validate'):
+            for slug in args:
+                try:
+                    photoset = PhotoSet.objects.get(slug=slug)
                     self.stdout.write('==== Processing PhotoSet [{0}]'.format(photoset))
                     for photo in photoset.photos.all():
                         img = self.flickr.get_photo(photo.slug)
                         try:
                             self.flickr.add_photo_to_photoset(photo, photoset)
-                            self.stdout.write('==== Adding Photo to PhotoSet [{0}]'.format(photo))
+                            self.stdout.write('==== Adding Photo to PhotoSet [{0}][{1}][{2}]'.format(photo, photoset.title, photoset.slug))
                         except Exception, e:
                             context = self.flickr.get_photo_context(photo)
                             self.stdout.write('==== Photo already in PhotoSet [{0}][{1}][{2}]'.format(photo, context.get('title'), context.get('photoset_id')))
                     self.stdout.write('Successfully Validated PhotoSet "{0}"'.format(photoset))
                 except PhotoSet.DoesNotExist:
-                    raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
+                    raise CommandError('PhotoSet "{0}" does not exist'.format(slug))
         elif options.get('directory'):
             photo_dir = settings.PHOTO_DIR.format(self.user.username)
             for dirname, dirnames, filenames in os.walk(photo_dir):
@@ -62,16 +72,16 @@ class Command(BaseCommand):
                 except:
                     pass
         else:
-            for photoset in args:
+            for directory in args:
                 try:
-                    self.get_directory_listing(photoset)
-                    self.stdout.write('Successfully Uploaded PhotoSet "{0}"'.format(photoset))
+                    self.get_directory_listing(directory)
+                    self.stdout.write('Successfully Uploaded PhotoSet Directory "{0}"'.format(directory))
                 except PhotoSet.DoesNotExist:
-                    raise CommandError('PhotoSet "{0}" does not exist'.format(photoset))
+                    raise CommandError('PhotoSet Directory "{0}" does not exist'.format(directory))
 
     def get_directory_listing(self, directory):
         for dirname, dirnames, filenames in os.walk(directory):
-            for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library']:
+            for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library', '.cr2']:
                 if name in filenames:
                     filenames.remove(name)
             for name in ['iChat Icons', 'iPhoto Library', 'Aperture Library.aplibrary']:
@@ -84,7 +94,7 @@ class Command(BaseCommand):
                 if not self.dry:
                     primary = None
                     if photoset.total < self.total or set_created:
-                        self.stdout.write('==== photoset [{0}]'.format(photoset))
+                        self.stdout.write('==== photoset [{0}][{1}][{2}]'.format(photoset, photoset.total, self.total))
                         for filename in filenames:
                             ext = os.path.splitext(filename)[1][1:]
                             ext_type = Photo().get_type(ext.upper())
@@ -100,12 +110,13 @@ class Command(BaseCommand):
                                         photoset.total = photoset.total + 1
                                     except Exception, e:
                                         self.stdout.write('==== Failed to create PhotoSet [{0}]'.format(photoset))
-                                elif img_created or img_uploaded:
+                                elif img_created or img_uploaded or self.validate:
                                     try:
                                         self.flickr.add_photo_to_photoset(photo, photoset)
                                         photoset.total = photoset.total + 1
                                     except Exception, e:
                                         self.stdout.write('==== Failed to add Photo to PhotoSet [{0}][{1}]'.format(photo, photoset))
+                                        self.stdout.write('==== Error [{0}]'.format(e))
                                 else:
                                     pass
                                 photoset.save()
@@ -185,6 +196,7 @@ class Command(BaseCommand):
                 self.stdout.write('==== Exception [{0}]'.format(e))
                 self.stdout.write('==== filename [{0}]'.format(filename))
                 return None, False, False
+        # if photo is new or does not have a photo_id (slug) then upload it
         if created or not photo.slug:
             self.stdout.write('==== Uploading Photo [{0}]'.format(filename))
             try:

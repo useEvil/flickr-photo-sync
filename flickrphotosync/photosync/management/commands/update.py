@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         for key in ['size', 'meta', 'server', 'empty', 'filename', 'match', 'replace']:
-            setattr(self, key, options.get(key))
+            setattr(self, key, options.get(key, None))
 
         if options.get('empty'):
             photosets = Photo.objects.filter(width=0, height=0).values_list('photoset__slug', flat=True).distinct()

@@ -24,6 +24,7 @@ class PhotoSet(ModifiedDate):
     title = models.CharField(max_length=250)
     slug = models.CharField(max_length=250)
     full_path = models.CharField(max_length=1000)
+#     local_path = models.CharField(max_length=1000)
     total = models.PositiveIntegerField(blank=False, default=0)
     farm = models.PositiveIntegerField(blank=False, default=0)
     server = models.PositiveIntegerField(blank=False, default=0)
@@ -59,7 +60,6 @@ class Photo(ModifiedDate):
     slug = models.CharField(max_length=250)
     file_name = models.CharField(max_length=500)
     full_path = models.CharField(max_length=1000)
-#     full_uri = models.CharField(max_length=1000)
     width = models.PositiveIntegerField(blank=False, default=0)
     height = models.PositiveIntegerField(blank=False, default=0)
     type = models.PositiveIntegerField(blank=False, default=0, choices=IMAGE_TYPES)
@@ -84,8 +84,6 @@ class Photo(ModifiedDate):
             Flickr().set_photo_info(self)
         return super(Photo, self).save(*args, **kwargs)
 
-## override delete functionality to remove photo from Flickr as well
-## requires delete permissions
     def delete(self, *args, **kwargs):
         Flickr().delete_photo(self)
         if kwargs.get('delete_set', False) is False:

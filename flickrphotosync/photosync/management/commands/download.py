@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         for key in ['all', 'dry', 'public', 'directory']:
-            setattr(self, key, options.get(key))
+            setattr(self, key, options.get(key, None))
 
         elif options.get('all'):
             photosets = PhotoSet.objects.all()
