@@ -1,4 +1,3 @@
-import re as regexp
 import datetime as date
 
 from django.db import models
@@ -99,3 +98,19 @@ class Photo(ModifiedDate):
             if imagetype == type:
                 return index
         return None
+
+
+class CopySettings(models.Model):
+
+    name = models.CharField(max_length=250)
+    slug = models.CharField(max_length=250)
+    full_path = models.CharField(max_length=1000)
+    last_photo = models.PositiveIntegerField(blank=False, default=0)
+    last_moive = models.PositiveIntegerField(blank=False, default=0)
+    photo_name_format = models.CharField(max_length=100)
+    movie_name_format = models.CharField(max_length=100)
+    counter = models.PositiveIntegerField(blank=False, default=0)
+
+    def __unicode__(self):
+        return self.name
+

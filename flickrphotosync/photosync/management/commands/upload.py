@@ -30,7 +30,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         for key in ['all', 'dry', 'public', 'directory', 'validate', 'replace']:
-            setattr(self, key, options.get(key, None))
+            option = options.get(key, None)
+            if option:
+                setattr(self, key, option)
 
         if options.get('all'):
             photo_dir = settings.PHOTO_DIR.format(self.user.username)
@@ -81,12 +83,14 @@ class Command(BaseCommand):
 
     def get_directory_listing(self, directory):
         for dirname, dirnames, filenames in os.walk(directory):
-            for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library', '.cr2']:
-                if name in filenames:
-                    filenames.remove(name)
-            for name in ['iChat Icons', 'iPhoto Library', 'Aperture Library.aplibrary']:
-                if name in dirnames:
-                    dirnames.remove(name)
+            for filename in filenames:
+                for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library', '.cr2']:
+                    if name in filename:
+                        filenames.remove(filename)
+            for dirname in dirnames:
+                for name in ['iChat Icons', 'iPhoto Library', 'Aperture Library.aplibrary']:
+                    if name in dirname:
+                        dirnames.remove(dirname)
 
             self.total = len(filenames)
             if self.total:

@@ -27,7 +27,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         for key in ['all', 'weeks', 'pages']:
-            setattr(self, key, options.get(key, None))
+            option = options.get(key, None)
+            if option:
+                setattr(self, key, option)
 
         if options.get('weeks'):
             self.instagram.weeks = options.get('weeks')
