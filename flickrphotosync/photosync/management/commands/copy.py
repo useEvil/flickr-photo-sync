@@ -19,10 +19,6 @@ class Command(BaseCommand):
     help = 'Copy photos from an SD Card to a local photo directory'
     user = User.objects.get(pk=1)
     slug = None
-    card = None
-    type = None
-    number = None
-    settings = None
     directory = settings.PHOTO_DOWNLOAD_DIR
 
     option_list = BaseCommand.option_list + (
