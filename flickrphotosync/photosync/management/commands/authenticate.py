@@ -21,10 +21,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         for key in ['verify', 'oauth_token', 'oauth_verifier', 'perms']:
-            setattr(self, key, options.get(key))
+            option = options.get(key, None)
+            if option:
+                setattr(self, key, option)
 
         if options.get('verify'):
             auth_props = self.flickr.api.get_auth_tokens(self.oauth_verifier)
-            print '==== auth_props [{0}]'.format(auth_props)
+            self.stdout.write('==== auth_props [{0}]'.format(auth_props))
         else:
             self.flickr.api.authenticate_via_browser(perms=self.perms)

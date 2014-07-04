@@ -1,4 +1,3 @@
-import re as regexp
 import datetime as date
 
 from django.db import models
@@ -24,6 +23,7 @@ class PhotoSet(ModifiedDate):
     title = models.CharField(max_length=250)
     slug = models.CharField(max_length=250)
     full_path = models.CharField(max_length=1000)
+#     local_path = models.CharField(max_length=1000)
     total = models.PositiveIntegerField(blank=False, default=0)
     farm = models.PositiveIntegerField(blank=False, default=0)
     server = models.PositiveIntegerField(blank=False, default=0)
@@ -59,7 +59,6 @@ class Photo(ModifiedDate):
     slug = models.CharField(max_length=250)
     file_name = models.CharField(max_length=500)
     full_path = models.CharField(max_length=1000)
-#     full_uri = models.CharField(max_length=1000)
     width = models.PositiveIntegerField(blank=False, default=0)
     height = models.PositiveIntegerField(blank=False, default=0)
     type = models.PositiveIntegerField(blank=False, default=0, choices=IMAGE_TYPES)
@@ -84,8 +83,6 @@ class Photo(ModifiedDate):
             Flickr().set_photo_info(self)
         return super(Photo, self).save(*args, **kwargs)
 
-## override delete functionality to remove photo from Flickr as well
-## requires delete permissions
     def delete(self, *args, **kwargs):
         Flickr().delete_photo(self)
         if kwargs.get('delete_set', False) is False:
@@ -101,3 +98,19 @@ class Photo(ModifiedDate):
             if imagetype == type:
                 return index
         return None
+
+
+class CopySettings(models.Model):
+
+    name = models.CharField(max_length=250)
+    slug = models.CharField(max_length=250)
+    full_path = models.CharField(max_length=1000)
+    last_photo = models.PositiveIntegerField(blank=False, default=0)
+    last_moive = models.PositiveIntegerField(blank=False, default=0)
+    photo_name_format = models.CharField(max_length=100)
+    movie_name_format = models.CharField(max_length=100)
+    counter = models.PositiveIntegerField(blank=False, default=0)
+
+    def __unicode__(self):
+        return self.name
+

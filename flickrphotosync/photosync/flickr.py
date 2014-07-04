@@ -80,18 +80,37 @@ class Flickr(object):
         return url(slug)
 
     def set_photo_info(self, photo):
+        if not photo.slug: return
         result = self.api.photos.setMeta(photo_id=photo.slug, title=photo.title, description=photo.description)
         return result
 
+    def get_photo_context(self, photo):
+        if not photo.slug: return
+        result = self.api.photos.getAllContexts(photo_id=photo.slug)
+        context = {
+            'photoset_id': result.find(".//set").attrib['id'],
+            'title': result.find(".//set").attrib['title'],
+        }
+        return context
+
     def set_photoset_info(self, photoset):
+        if not photoset.slug: return
         result = self.api.photosets.editMeta(photoset_id=photoset.slug, title=photoset.title, description=photoset.description)
         return result
 
+    def set_photoset_list(self, photoset):
+        if not photoset.slug: return
+        list = photoset.photos.values_list('slug', flat=True).order_by('id')
+        result = self.api.photosets.editPhotos(photoset_id=photoset.slug, primary_photo_id=photoset.primary, photo_ids=','.join(list))
+        return result
+
     def delete_photo(self, photo):
+        if not photo.slug: return
         result = self.api.photos.delete(photo_id=photo.slug)
         return result
 
     def delete_photoset(self, photoset):
+        if not photoset.slug: return
         result = self.api.photosets.delete(photoset_id=photoset.slug)
         return result
 
@@ -110,6 +129,7 @@ class Flickr(object):
         return set
 
     def add_photo_to_photoset(self, photo, photoset):
+        if not photo.slug and not photoset.slug: return
         params = {'photo_id': photo.slug, 'photoset_id': photoset.slug}
         return self.api.photosets.addPhoto(**params)
 

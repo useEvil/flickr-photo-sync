@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from models import Photo, PhotoSet, Collection
+from models import Photo, PhotoSet, Collection, CopySettings
 from forms import PhotoSetForm
 from actions import delete_selected_from_flickr
 
@@ -60,6 +60,7 @@ class PhotoAdmin(admin.ModelAdmin):
 
 
 class PhotoInline(admin.TabularInline):
+
     model = Photo
     extra = 0
     verbose_name_plural = 'photos'
@@ -84,18 +85,26 @@ class PhotoSetAdmin(admin.ModelAdmin):
 
 
 class PhotoSetInline(admin.TabularInline):
+
     model = PhotoSet
     extra = 6
     verbose_name_plural = 'photosets'
 
 
 class CollectionAdmin(admin.ModelAdmin):
+
     list_display = ['title', 'slug', 'created_date']
     search_fields = ['title', 'description', 'slug']
     inlines = [PhotoSetInline]
+    save_on_top = True
+
+class CopySettingsAdmin(admin.ModelAdmin):
+
+    list_display = ['name', 'last_photo', 'last_moive', 'counter']
     save_on_top = True
 
 
 admin.site.register(Photo, PhotoAdmin)
 admin.site.register(PhotoSet, PhotoSetAdmin)
 admin.site.register(Collection, CollectionAdmin)
+admin.site.register(CopySettings, CopySettingsAdmin)
