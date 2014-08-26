@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 
 from flickrphotosync.photosync.models import Photo, PhotoSet, Collection
 from flickrphotosync.photosync.flickr import Flickr
+from flickrphotosync.photosync.helpers import *
+
 
 class Command(BaseCommand):
     args = '<photoset photoset ...>'
@@ -20,6 +22,8 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+
+        set_options(self, options, ['all'])
 
         if options.get('all'):
             self.import_flickr_photosets()

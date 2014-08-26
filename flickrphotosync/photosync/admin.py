@@ -100,7 +100,7 @@ class CollectionAdmin(admin.ModelAdmin):
 
 class CopySettingsAdmin(admin.ModelAdmin):
 
-    list_display = ['name', 'last_photo', 'last_moive', 'counter']
+    list_display = ['name', 'slug', 'last_photo', 'last_moive', 'counter']
     save_on_top = True
 
 

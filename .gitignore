@@ -50,6 +50,9 @@ coverage.xml
 *.pot
 local.py
 db.sqlite3
+settings/monitor.py
+settings/vhost.conf
+settings/wsgi.py
 
 # Sphinx documentation
 docs/_build/

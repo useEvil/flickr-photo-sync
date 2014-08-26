@@ -4,6 +4,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
 from flickrphotosync.photosync.flickr import Flickr
+from flickrphotosync.photosync.helpers import *
 
 
 class Command(BaseCommand):
@@ -20,10 +21,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        for key in ['verify', 'oauth_token', 'oauth_verifier', 'perms']:
-            option = options.get(key, None)
-            if option:
-                setattr(self, key, option)
+        set_options(self, options, ['verify', 'oauth_token', 'oauth_verifier', 'perms'])
 
         if options.get('verify'):
             auth_props = self.flickr.api.get_auth_tokens(self.oauth_verifier)

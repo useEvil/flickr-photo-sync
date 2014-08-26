@@ -13,6 +13,8 @@ from django.conf import settings
 
 from flickrphotosync.photosync.models import Photo, PhotoSet, Collection, CopySettings
 from flickrphotosync.photosync.flickr import Flickr
+from flickrphotosync.photosync.helpers import *
+
 
 class Command(BaseCommand):
     args = '<slug slug ...>'
@@ -24,14 +26,12 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--slug', action='store', dest='slug', default=False, help='Short Name of SD Card'),
         make_option('--directory', action='store', dest='directory', default=False, help='Copy to this directory'),
+        make_option('--folder', action='store', dest='folder', default=False, help='Create Folder'),
     )
 
     def handle(self, *args, **options):
 
-        for key in ['slug', 'directory']:
-            option = options.get(key, None)
-            if option:
-                setattr(self, key, option)
+        set_options(self, options, ['slug', 'directory'])
 
         try:
             self.settings = CopySettings.objects.get(slug=self.slug)

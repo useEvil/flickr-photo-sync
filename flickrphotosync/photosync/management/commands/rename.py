@@ -9,6 +9,8 @@ from django.conf import settings
 
 from flickrphotosync.photosync.models import Photo, PhotoSet, Collection
 from flickrphotosync.photosync.flickr import Flickr
+from flickrphotosync.photosync.helpers import *
+
 
 class Command(BaseCommand):
     args = '<photoset photoset ...>'
@@ -21,7 +23,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        self.prefix = options.get('prefix')
+        set_options(self, options, ['prefix'])
+
         for photoset in args:
             try:
                 self.get_photoset(int(photoset))

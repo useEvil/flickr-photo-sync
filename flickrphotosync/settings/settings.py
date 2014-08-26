@@ -44,8 +44,8 @@ INSTALLED_APPS = (
 #     'sentry',
 
     # photosync
-    'flickrphotosync.photosync',
-    'flickrphotosync.mixins',
+    'photosync',
+    'mixins',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -57,9 +57,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'flickrphotosync.urls'
+ROOT_URLCONF = 'urls'
 
-WSGI_APPLICATION = 'flickrphotosync.wsgi.application'
+WSGI_APPLICATION = 'wsgi.application'
 
 
 # Database

@@ -11,6 +11,8 @@ from django.conf import settings
 
 from flickrphotosync.photosync.models import Photo, PhotoSet, Collection
 from flickrphotosync.photosync.flickr import Flickr
+from flickrphotosync.photosync.helpers import *
+
 
 class Command(BaseCommand):
     args = '<photodir photodir ...>'
@@ -22,22 +24,19 @@ class Command(BaseCommand):
         make_option('--all', action='store_true', dest='all', default=False, help='Retrieve all photosets'),
         make_option('--dry', action='store_true', dest='dry', default=False, help='Only do a dry run'),
         make_option('--public', action='store_true', dest='public', default=0, help='Set privacy to public'),
-        make_option('--validate', action='store_true', dest='validate', default=0, help='Set privacy to public'),
+        make_option('--validated', action='store_true', dest='validated', default=0, help='Validate photoset'),
         make_option('--replace', action='store_true', dest='replace', default=0, help='Replace photoset list with local file list'),
         make_option('--directory', action='store', dest='directory', default=False, help='Match this directory'),
     )
 
     def handle(self, *args, **options):
 
-        for key in ['all', 'dry', 'public', 'directory', 'validate', 'replace']:
-            option = options.get(key, None)
-            if option:
-                setattr(self, key, option)
+        set_options(self, options, ['all', 'dry', 'public', 'directory', 'validated', 'replace'])
 
-        if options.get('all'):
+        if self.all:
             photo_dir = settings.PHOTO_DIR.format(self.user.username)
             self.get_directory_listing(photo_dir)
-        elif options.get('replace'):
+        elif self.replace:
             for slug in args:
                 try:
                     photoset = PhotoSet.objects.get(slug=slug)
@@ -46,7 +45,7 @@ class Command(BaseCommand):
                     self.stdout.write('Successfully Replaced PhotoSet "{0}"'.format(photoset))
                 except PhotoSet.DoesNotExist:
                     raise CommandError('PhotoSet "{0}" does not exist'.format(slug))
-        elif options.get('validate'):
+        elif self.validated:
             for slug in args:
                 try:
                     photoset = PhotoSet.objects.get(slug=slug)
@@ -62,17 +61,12 @@ class Command(BaseCommand):
                     self.stdout.write('Successfully Validated PhotoSet "{0}"'.format(photoset))
                 except PhotoSet.DoesNotExist:
                     raise CommandError('PhotoSet "{0}" does not exist'.format(slug))
-        elif options.get('directory'):
-            photo_dir = settings.PHOTO_DIR.format(self.user.username)
-            for dirname, dirnames, filenames in os.walk(photo_dir):
-                try:
-                    index = dirnames.index(self.directory)
-                    if index:
-                        full_path = os.path.join(dirname, dirnames[index])
-                        self.get_directory_listing(full_path)
-                        return
-                except:
-                    pass
+        elif self.directory:
+            try:
+                self.get_directory_listing(self.directory)
+                return
+            except:
+                pass
         else:
             for directory in args:
                 try:
@@ -83,14 +77,7 @@ class Command(BaseCommand):
 
     def get_directory_listing(self, directory):
         for dirname, dirnames, filenames in os.walk(directory):
-            for filename in filenames:
-                for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library', '.cr2']:
-                    if name in filename:
-                        filenames.remove(filename)
-            for dirname in dirnames:
-                for name in ['iChat Icons', 'iPhoto Library', 'Aperture Library.aplibrary']:
-                    if name in dirname:
-                        dirnames.remove(dirname)
+            skip_files_and_directories(dirnames, filenames)
 
             self.total = len(filenames)
             if self.total:
@@ -114,7 +101,7 @@ class Command(BaseCommand):
                                         photoset.total = photoset.total + 1
                                     except Exception, e:
                                         self.stdout.write('==== Failed to create PhotoSet [{0}]'.format(photoset))
-                                elif img_created or img_uploaded or self.validate:
+                                elif img_created or img_uploaded or self.validated:
                                     try:
                                         self.flickr.add_photo_to_photoset(photo, photoset)
                                         photoset.total = photoset.total + 1

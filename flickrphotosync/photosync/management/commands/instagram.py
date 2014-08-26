@@ -11,6 +11,8 @@ from django.contrib.auth.models import User
 from django.conf import settings
 
 from flickrphotosync.photosync.instagramapi import Instagram
+from flickrphotosync.photosync.helpers import *
+
 
 class Command(BaseCommand):
     args = '<photoset photoset ...>'
@@ -26,10 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        for key in ['all', 'weeks', 'pages']:
-            option = options.get(key, None)
-            if option:
-                setattr(self, key, option)
+        set_options(self, options, ['all', 'weeks', 'pages'])
 
         if options.get('weeks'):
             self.instagram.weeks = options.get('weeks')

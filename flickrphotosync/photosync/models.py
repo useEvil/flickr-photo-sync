@@ -2,8 +2,8 @@ import datetime as date
 
 from django.db import models
 
-from flickrphotosync.mixins.models import ModifiedDate
-from flickrphotosync.photosync.flickr import Flickr
+from mixins.models import ModifiedDate
+from photosync.flickr import Flickr
 
 # Create your models here.
 class Collection(ModifiedDate):

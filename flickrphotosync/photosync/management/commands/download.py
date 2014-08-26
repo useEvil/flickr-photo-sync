@@ -12,6 +12,8 @@ from django.conf import settings
 
 from flickrphotosync.photosync.models import Photo, PhotoSet, Collection
 from flickrphotosync.photosync.flickr import Flickr
+from flickrphotosync.photosync.helpers import *
+
 
 class Command(BaseCommand):
     args = '<photoset photoset ...>'
@@ -28,12 +30,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        for key in ['all', 'dry', 'public', 'directory']:
-            option = options.get(key, None)
-            if option:
-                setattr(self, key, option)
+        set_options(self, options, ['all', 'dry', 'public', 'directory'])
 
-        elif options.get('all'):
+        if options.get('all'):
             photosets = PhotoSet.objects.all()
             for photoset in photosets:
                 self.get_photoset(photoset)
