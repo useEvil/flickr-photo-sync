@@ -1,7 +1,4 @@
-import os
-import sys
-import pytz
-import shutil
+import os, errno, sys, pytz, urllib, shutil
 import re as regex
 import datetime as date
 
@@ -16,22 +13,23 @@ from flickrphotosync.photosync.flickr import Flickr
 from flickrphotosync.photosync.helpers import *
 
 
+# dj copy --slug=dslr_64 --directory="Birthday-2014.07.27-Bree Nguyen-The Rinks"
+
+
 class Command(BaseCommand):
     args = '<slug slug ...>'
     help = 'Copy photos from an SD Card to a local photo directory'
     user = User.objects.get(pk=1)
-    slug = None
-    directory = settings.PHOTO_DOWNLOAD_DIR
 
     option_list = BaseCommand.option_list + (
-        make_option('--slug', action='store', dest='slug', default=False, help='Short Name of SD Card'),
-        make_option('--directory', action='store', dest='directory', default=False, help='Copy to this directory'),
+        make_option('--slug', action='store', dest='slug', default='dslr_64', help='Short Name of SD Card'),
+        make_option('--directory', action='store', dest='directory', default=settings.PHOTO_DOWNLOAD_DIR, help='Copy to this directory'),
         make_option('--folder', action='store', dest='folder', default=False, help='Create Folder'),
     )
 
     def handle(self, *args, **options):
 
-        set_options(self, options, ['slug', 'directory'])
+        set_options(self, options, ['slug', 'directory', 'folder'])
 
         try:
             self.settings = CopySettings.objects.get(slug=self.slug)
@@ -48,24 +46,19 @@ class Command(BaseCommand):
 
     def get_directory_listing(self, card):
         directory = self.directory.format(self.user.username)
+        to_folder = os.path.join(directory, self.folder)
+        self.make_directory(to_folder)
         for dirname, dirnames, filenames in os.walk(card):
-            for filename in filenames:
-                for name in ['.DS_Store', '.localized', '.THM']:
-                    if name in filename:
-                        filenames.remove(filename)
-            for dirname in dirnames:
-                for name in ['MISC', 'CANONMSC']:
-                    if name in dirname:
-                        dirnames.remove(dirname)
+            skip_files_and_directories(dirnames, filenames)
 
-            for filename in filenames:
+            for filename in sorted(filenames):
                 match = regex.search(r'(?P<type>IMG|MVI)_(?P<number>\d+)[.][JPG|MOV|AVI]', filename)
                 if match:
                     current_number, to_filename = self.update_settings(match);
 
                     if self.number > current_number:
                         from_filename = os.path.join(dirname, filename)
-                        to_filename = os.path.join(directory, to_filename.format(self.settings.counter, self.number))
+                        to_filename = os.path.join(to_folder, to_filename.format(self.settings.counter, self.number))
                         shutil.copy2(from_filename, to_filename)
                         self.stdout.write('==== Copying Photo [{0}]'.format(to_filename))
 
@@ -92,3 +85,14 @@ class Command(BaseCommand):
         else:
             self.settings.last_moive = self.number
         return current_number, to_filename
+
+    def make_directory(self, path):
+        try:
+            os.makedirs(path)
+            self.stdout.write('==== Creating Directory [{0}]'.format(path))
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                self.stdout.write('==== Directory already exists [{0}]'.format(path))
+                pass
+            else:
+                raise CommandError('Processing Error "{0}"'.format(exc))

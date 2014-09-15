@@ -14,10 +14,10 @@ def set_options(obj, options, keys=[]):
 
 def skip_files_and_directories(dirnames, filenames):
     for filename in filenames:
-        for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library', '.cr2']:
+        for name in ['.DS_Store', '.localized', 'iPhoto Library', 'Aperture Library', '.cr2', '.THM']:
             if name in filename:
                 filenames.remove(filename)
     for dirname in dirnames:
-        for name in ['iChat Icons', 'iPhoto Library', 'Aperture Library']:
+        for name in ['iChat Icons', 'iPhoto Library', 'Aperture Library', 'MISC', 'CANONMSC']:
             if name in dirname:
                 dirnames.remove(dirname)

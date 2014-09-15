@@ -1,7 +1,4 @@
-import os
-import sys
-import pytz
-import urllib
+import os, errno, sys, pytz, urllib
 import datetime as date
 
 from PIL import Image
@@ -24,13 +21,13 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--all', action='store_true', dest='all', default=False, help='Retrieve all photosets'),
         make_option('--dry', action='store_true', dest='dry', default=False, help='Only do a dry run'),
-        make_option('--public', action='store_true', dest='public', default=False, help='Set privacy to public'),
+        make_option('--backup', action='store_true', dest='backup', default=False, help='Set backup flag to True'),
         make_option('--directory', action='store', dest='directory', default=False, help='Match this directory'),
     )
 
     def handle(self, *args, **options):
 
-        set_options(self, options, ['all', 'dry', 'public', 'directory'])
+        set_options(self, options, ['all', 'dry', 'backup', 'directory'])
 
         if options.get('all'):
             photosets = PhotoSet.objects.all()
@@ -48,9 +45,26 @@ class Command(BaseCommand):
 
     def get_photoset(self, photoset):
         self.stdout.write('==== Processing PhotoSet [{0}][{1}]'.format(photoset.title, photoset.slug))
-        set in self.flickr.get_photoset(photoset.slug):
-        if photoset.total < set.attrib['photos']:
-            for photo in photoset.photos:
-                size = self.flickr.get_photo_size(photo.slug):
-                urllib.urlretrieve(size.get('source'), photo.file_name)
+        set = self.flickr.get_photoset(photoset.slug)
+        if photoset.total < set.attrib['photos'] or self.backup:
+            download_path = settings.PHOTO_DOWNLOAD_DIR.format(self.user.username)
+            download_dir = os.path.join(download_path, photoset.title)
+            self.make_directory(download_dir)
+            for photo in photoset.photos.all():
+                self.stdout.write('==== Downloading Photo [{0}]'.format(photo.file_name))
+                if not self.dry and not os.path.isfile(photo.file_name):
+                    size = self.flickr.get_photo_size(photo.slug)
+                    photo_path = os.path.join(download_dir, photo.file_name)
+                    print '==== photo_path [{0}]'.format(photo_path)
+                    urllib.urlretrieve(size.get('source'), photo_path)
 
+    def make_directory(self, path):
+        try:
+            os.makedirs(path)
+            self.stdout.write('==== Creating Directory [{0}]'.format(path))
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                self.stdout.write('==== Directory already exists [{0}]'.format(path))
+                pass
+            else:
+                raise CommandError('Processing Error "{0}"'.format(exc))
