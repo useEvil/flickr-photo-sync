@@ -104,6 +104,11 @@ class Flickr(object):
         result = self.api.photosets.editPhotos(photoset_id=photoset.slug, primary_photo_id=photoset.primary, photo_ids=','.join(list))
         return result
 
+    def set_permissions(self, photo, is_public=0, is_friend=1, is_family=1):
+        if not photo.slug: return
+        result = self.api.photos.setPerms(photo_id=photo.slug, is_public=is_public, is_friend=is_friend, is_family=is_family)
+        return result
+
     def delete_photo(self, photo):
         if not photo.slug: return
         result = self.api.photos.delete(photo_id=photo.slug)

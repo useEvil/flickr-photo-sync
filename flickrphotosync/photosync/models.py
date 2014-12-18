@@ -92,12 +92,20 @@ class Photo(ModifiedDate):
             del kwargs['delete_set']
         return super(Photo, self).delete(*args, **kwargs)
 
+    def get_photo_size(self, label="Original"):
+        data = Flickr().get_photo_size(self.slug, label)
+        return data
+
     def get_type(self, type):
         d = dict(self.IMAGE_TYPES)
         for index, imagetype in d.iteritems():
             if imagetype == type:
                 return index
         return None
+
+    def set_permissions(self, is_public=0, is_friend=1, is_family=1):
+        if self.slug:
+            Flickr().set_permissions(self, is_public=is_public, is_friend=is_friend, is_family=is_family)
 
 
 class CopySettings(models.Model):

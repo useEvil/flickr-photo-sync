@@ -38,7 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-    'south',    # To handle database (model) changes and migration
+#     'south',    # To handle database (model) changes and migration
 
     # sentry
 #     'sentry',

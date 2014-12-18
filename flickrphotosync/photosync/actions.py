@@ -83,3 +83,37 @@ def delete_selected_from_flickr(modeladmin, request, queryset):
     ], context, current_app=modeladmin.admin_site.name)
 
 delete_selected_from_flickr.short_description = ugettext_lazy("Delete selected %(verbose_name_plural)s and from Flickr")
+
+def make_selected_private(modeladmin, request, queryset):
+    """
+    Make the selected Photos Private on Flickr
+    """
+    n = 0
+    for obj in queryset.all():
+        try:
+            obj.set_permissions(0, 1, 1)
+            n += 1
+        except:
+            pass
+    modeladmin.message_user(request, _("Successfully updated %(count)d %(items)s.") % {
+        "count": n, "items": model_ngettext(modeladmin.opts, n)
+    }, messages.SUCCESS)
+
+make_selected_private.short_description = ugettext_lazy("Make selected %(verbose_name_plural)s Private on Flickr")
+
+def make_selected_public(modeladmin, request, queryset):
+    """
+    Make the selected Photos Public on Flickr
+    """
+    n = 0
+    for obj in queryset.all():
+        try:
+            obj.set_permissions(1, 0, 0)
+            n += 1
+        except:
+            pass
+    modeladmin.message_user(request, _("Successfully updated %(count)d %(items)s.") % {
+        "count": n, "items": model_ngettext(modeladmin.opts, n)
+    }, messages.SUCCESS)
+
+make_selected_public.short_description = ugettext_lazy("Make selected %(verbose_name_plural)s Public on Flickr")

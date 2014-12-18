@@ -14,7 +14,7 @@ from flickrphotosync.photosync.helpers import *
 
 class Command(BaseCommand):
     args = '<photoset photoset ...>'
-    help = 'Upload photos from a local photo directory'
+    help = 'Downloads photos from a photoset on Flickr'
     flickr = Flickr()
     user = User.objects.get(pk=1)
 

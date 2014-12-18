@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from models import Photo, PhotoSet, Collection, CopySettings
 from forms import PhotoSetForm
-from actions import delete_selected_from_flickr
+from actions import delete_selected_from_flickr, make_selected_private, make_selected_public
 
 # Register your models here.
 class PhotoSetListFilter(admin.SimpleListFilter):
@@ -43,6 +43,13 @@ class PhotoAdmin(admin.ModelAdmin):
     full_path_link.allow_tags = True
     full_path_link.short_description = "Full Path"
 
+    def thumbnail(obj):
+        data = obj.get_photo_size("Thumbnail")
+        return data['source']
+        return '<img src="{0}" />'.format(data['source'])
+    thumbnail.allow_tags = True
+    thumbnail.short_description = "Thumbnail"
+
     def size_info(obj):
         return '{0}x{1}'.format(obj.width, obj.height)
     size_info.allow_tags = True
@@ -53,9 +60,9 @@ class PhotoAdmin(admin.ModelAdmin):
     server_info.allow_tags = True
     server_info.short_description = "Farm-Server"
 
-    list_display = ['title', 'photoset', 'slug', size_info, server_info, full_path_link, 'created_date']
+    list_display = ['title', 'photoset', 'slug', size_info, server_info, 'created_date', full_path_link]
     search_fields = ['title', 'photoset__title', 'photoset__description', 'photoset__slug', 'file_name', 'slug']
-    actions = [delete_selected_from_flickr]
+    actions = [delete_selected_from_flickr, make_selected_private, make_selected_public,]
     save_on_top = True
 
 
@@ -69,13 +76,19 @@ class PhotoInline(admin.TabularInline):
 
 class PhotoSetAdmin(admin.ModelAdmin):
 
-    # create a link for the student name
+    # create a link for the Flickr page
     def full_path_link(obj):
-        return '<a href="%s" class="nowrap" style="font-weight: bold;font-size: 12px;" target="_photo">%s</a>' % (obj.full_path, obj.slug)
+        return '<a href="{0}" class="nowrap" style="font-weight: bold;font-size: 12px;" target="_photo">{1}</a>'.format(obj.full_path, obj.slug)
     full_path_link.allow_tags = True
     full_path_link.short_description = "Slug"
 
-    list_display = ['id', 'title', 'total', full_path_link, 'created_date']
+    # create a link for the Flickr page
+    def view_photos_link(obj):
+        return '<a href="/admin/photosync/photo/?q={0}" class="nowrap" style="font-weight: bold;font-size: 12px;">View</a>'.format(obj.slug)
+    view_photos_link.allow_tags = True
+    view_photos_link.short_description = ""
+
+    list_display = ['id', 'title', 'total', 'created_date', full_path_link, view_photos_link]
     list_editable = ['title']
     list_filter = [PhotoSetListFilter]
     search_fields = ['title', 'description', 'slug']
@@ -100,7 +113,7 @@ class CollectionAdmin(admin.ModelAdmin):
 
 class CopySettingsAdmin(admin.ModelAdmin):
 
-    list_display = ['name', 'slug', 'last_photo', 'last_moive', 'counter']
+    list_display = ['name', 'slug', 'last_photo', 'last_moive', 'counter', 'photo_name_format']
     save_on_top = True
 
 

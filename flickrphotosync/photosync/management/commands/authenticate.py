@@ -16,7 +16,7 @@ class Command(BaseCommand):
         make_option('--verify', action='store_true', dest='verify', default=False, help='Verify FlickrAPI OAuth Tokens'),
         make_option('--oauth_token', action='store', dest='oauth_token', default=False, help='FlickrAPI OAuth Token'),
         make_option('--oauth_verifier', action='store', dest='oauth_verifier', default=False, help='FlickrAPI OAuth Verifier'),
-        make_option('--perms', action='store', dest='perms', default="write", help='FlickrAPI OAuth Permissions'),
+        make_option('--perms', action='store', dest='perms', default="delete", help='FlickrAPI OAuth Permissions'),
     )
 
     def handle(self, *args, **options):

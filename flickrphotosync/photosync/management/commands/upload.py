@@ -24,7 +24,7 @@ class Command(BaseCommand):
         make_option('--public', action='store_true', dest='public', default=0, help='Set privacy to public'),
         make_option('--validated', action='store_true', dest='validated', default=0, help='Validate photoset'),
         make_option('--replace', action='store_true', dest='replace', default=0, help='Replace photoset list with local file list'),
-        make_option('--directory', action='store', dest='directory', default=False, help='Match this directory'),
+        make_option('--directory', action='store', dest='directory', default=False, help='Full path to directory to upload'),
     )
 
     def handle(self, *args, **options):
@@ -194,14 +194,18 @@ class Command(BaseCommand):
             except Exception, e:
                 self.stdout.write('==== Failed to Upload Photo [{0}]'.format(filename))
                 return None, False, False
-            img = self.flickr.get_photo(photo_id)
-            photo.full_path = img.get('full_path')
-            photo.created_date = img.get('taken')
-            photo.modified_date = modified_date
-            photo.farm = img.get('farm')
-            photo.server = img.get('server')
-            photo.slug = photo_id
-            photo.save()
+            else:
+                self.stdout.write('==== Updating Info [{0}]'.format(photo))
+                img = self.flickr.get_photo(photo_id)
+                photo.full_path = img.get('full_path')
+                photo.created_date = img.get('taken')
+                photo.modified_date = modified_date
+                photo.farm = img.get('farm')
+                photo.server = img.get('server')
+                photo.slug = photo_id
+                photo.save()
+                self.stdout.write('==== Setting Permissions [{0}]'.format(photo))
+                photo.set_permissions(0, 1, 1)
         return photo, created, uploaded
 
     def create_thumbnail(self, dirname, filename, create=False):
