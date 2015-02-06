@@ -7,9 +7,9 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from flickrphotosync.photosync.models import Photo, PhotoSet, Collection
-from flickrphotosync.photosync.flickr import Flickr
-from flickrphotosync.photosync.helpers import *
+from photosync.models import Photo, PhotoSet, Collection
+from photosync.flickr import Flickr
+from photosync.helpers import *
 
 
 class Command(BaseCommand):

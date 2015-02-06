@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
+from import_export.admin import ImportExportModelAdmin
+
+from importexport import PhotoSetResource, PhotoResource, CopySettingsResource
 from models import Photo, PhotoSet, Collection, CopySettings
 from forms import PhotoSetForm
 from actions import delete_selected_from_flickr, make_selected_private, make_selected_public
@@ -35,7 +38,9 @@ class PhotoSetListFilter(admin.SimpleListFilter):
             return queryset.all()
 
 
-class PhotoAdmin(admin.ModelAdmin):
+class PhotoAdmin(ImportExportModelAdmin):
+
+    resource_class = PhotoResource
 
     # create a link for the photo on flickr
     def full_path_link(obj):
@@ -74,7 +79,9 @@ class PhotoInline(admin.TabularInline):
     fields = ('title', 'slug', 'file_name', 'width', 'height', 'type')
 
 
-class PhotoSetAdmin(admin.ModelAdmin):
+class PhotoSetAdmin(ImportExportModelAdmin):
+
+    resource_class = PhotoSetResource
 
     # create a link for the Flickr page
     def full_path_link(obj):
@@ -111,7 +118,9 @@ class CollectionAdmin(admin.ModelAdmin):
     inlines = [PhotoSetInline]
     save_on_top = True
 
-class CopySettingsAdmin(admin.ModelAdmin):
+class CopySettingsAdmin(ImportExportModelAdmin):
+
+    resource_class = CopySettingsResource
 
     list_display = ['name', 'slug', 'last_photo', 'last_moive', 'counter', 'photo_name_format']
     save_on_top = True

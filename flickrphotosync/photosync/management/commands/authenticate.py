@@ -3,8 +3,8 @@ import os
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
-from flickrphotosync.photosync.flickr import Flickr
-from flickrphotosync.photosync.helpers import *
+from photosync.flickr import Flickr
+from photosync.helpers import *
 
 
 class Command(BaseCommand):

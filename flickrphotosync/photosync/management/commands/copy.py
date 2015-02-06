@@ -8,9 +8,9 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from flickrphotosync.photosync.models import Photo, PhotoSet, Collection, CopySettings
-from flickrphotosync.photosync.flickr import Flickr
-from flickrphotosync.photosync.helpers import *
+from photosync.models import Photo, PhotoSet, Collection, CopySettings
+from photosync.flickr import Flickr
+from photosync.helpers import *
 
 
 # dj copy --slug=dslr_64 --directory="Birthday-2014.07.27-Bree Nguyen-The Rinks"
@@ -18,7 +18,10 @@ from flickrphotosync.photosync.helpers import *
 
 class Command(BaseCommand):
     args = '<slug slug ...>'
-    help = 'Copy photos from an SD Card to a local photo directory'
+    help = '''
+        Copy photos from an SD Card to a local photo directory
+        python manage.py copy --slug=dslr_64 --folder="Concert-2015.02.04-Brooke" 
+    '''
     user = User.objects.get(pk=1)
 
     option_list = BaseCommand.option_list + (

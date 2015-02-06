@@ -7,8 +7,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from flickrphotosync.photosync.instagramapi import Instagram
-from flickrphotosync.photosync.helpers import *
+from photosync.instagramapi import Instagram
+from photosync.helpers import *
 
 
 class Command(BaseCommand):
