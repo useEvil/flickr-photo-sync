@@ -1,0 +1,56 @@
+<html>
+<head>
+  <title>HTML5 File API</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" href="/media/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/media/css/jasny-bootstrap.min.css">
+  <link rel="stylesheet" href="/media/css/bootstrap-editable.css">
+  <link rel="stylesheet" href="/media/css/fileinput.min.css">
+</head>
+<body>
+  <div>
+    <form class="form-horizontal well" id="file_upload" action="{{ request.path }}" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <legend>
+        <h3 id="title">CSV File Uploader</h3>
+      </legend>
+      <fieldset>
+        <div class="fileinput fileinput-new input-group" data-provides="fileinput">
+          <div class="form-control" data-trigger="fileinput">
+            <i class="glyphicon glyphicon-file fileinput-exists"></i> <span class="fileinput-filename"></span>
+          </div>
+          <span class="input-group-addon btn btn-default btn-file">
+            <span class="fileinput-new">Select file</span>
+            <span class="fileinput-exists">Change</span>
+            <input id="csvFileInput" type="file" class="file" onchange="handleFiles(this.files)" accept=".csv">
+          </span>
+          <a href="#" class="input-group-addon btn btn-default fileinput-exists" data-dismiss="fileinput" data-dismiss="csv_output">Remove</a>
+          <a href="#" class="input-group-addon btn btn-default fileinput-exists" id="upload_link">Upload</a>
+        </div>
+
+      </fieldset>
+    </form>
+    <div id="csv_output" class="fileinput-exists"></div>
+  </div>
+  <br>
+  <br>
+  <footer></footer>
+
+  <script type="text/javascript" src="/media/js/jquery.min.js"></script>
+  <script type="text/javascript" src="/media/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/media/js/jasny-bootstrap.min.js"></script>
+  <!--script type="text/javascript" src="/media/js/angular.min.js"></script>
+  <script type="text/javascript" src="/media/js/xeditable.min.js"></script-->
+  <script type="text/javascript" src="/media/js/bootstrap-editable.min.js"></script>
+  <script type="text/javascript" src="/media/js/csv.js"></script>
+  <script type="text/javascript" src="/media/js/read-csv.js"></script>
+</body>
+<script type="text/javascript">
+  $(document).ready(function(){
+    $("#upload_link").bind('click', submitTableRows);
+//     $("#upload_link").bind('click', function(){
+//       $("#file_upload").submit();
+//     });
+  });
+</script>
+</html>
