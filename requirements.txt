@@ -8,6 +8,6 @@ djangorestframework
 django_compressor
 Fabric
 South
-Pillow
 python-instagram
-https://bitbucket.org/useevil/flickrapi-oauth-fix/get/b39c8c985191.zip
+# https://bitbucket.org/useevil/flickrapi-oauth-fix/get/b39c8c985191.zip
+flickrapi

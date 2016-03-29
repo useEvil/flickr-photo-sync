@@ -105,7 +105,10 @@ class Photo(ModifiedDate):
 
     def set_permissions(self, is_public=0, is_friend=1, is_family=1):
         if self.slug:
-            Flickr().set_permissions(self, is_public=is_public, is_friend=is_friend, is_family=is_family)
+            try:
+                res = Flickr().set_permissions(self, is_public=is_public, is_friend=is_friend, is_family=is_family)
+            except Exception, e:
+                pass
 
 
 class CopySettings(models.Model):

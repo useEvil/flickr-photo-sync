@@ -23,6 +23,7 @@ class Command(BaseCommand):
         python manage.py copy --slug=dslr_64 --folder="Concert-2015.02.04-Brooke" 
     '''
     user = User.objects.get(pk=1)
+    count = 0
 
     option_list = BaseCommand.option_list + (
         make_option('--slug', action='store', dest='slug', default='dslr_64', help='Short Name of SD Card'),
@@ -43,9 +44,9 @@ class Command(BaseCommand):
         try:
             self.get_directory_listing(self.card)
             self.settings.save()
-            self.stdout.write('Successfully Copied Photos from Directory "{0}"'.format(self.card))
-        except Exception, e:
-            raise CommandError('Photo Directory "{0}" does not exist: {1}'.format(self.card, e))
+            self.stdout.write('Successfully Copied {0} Photos from Directory "{1}"'.format(self.count, self.card))
+        except Exception as err:
+            raise CommandError('Photo Directory "{0}" does not exist: {1}'.format(self.card, err))
 
     def get_directory_listing(self, card):
         directory = self.directory.format(self.user.username)
@@ -64,6 +65,7 @@ class Command(BaseCommand):
                         to_filename = os.path.join(to_folder, to_filename.format(self.settings.counter, self.number))
                         shutil.copy2(from_filename, to_filename)
                         self.stdout.write('==== Copying Photo [{0}]'.format(to_filename))
+                        self.count += 1
 
     def set_config(self):
         self.card = self.settings.full_path

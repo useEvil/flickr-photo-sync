@@ -20,19 +20,21 @@ class Command(BaseCommand):
     '''
     flickr = Flickr()
     user = User.objects.get(pk=1)
+    count = 0
 
     option_list = BaseCommand.option_list + (
         make_option('--all', action='store_true', dest='all', default=False, help='Retrieve all photosets'),
         make_option('--dry', action='store_true', dest='dry', default=False, help='Only do a dry run'),
         make_option('--public', action='store_true', dest='public', default=0, help='Set privacy to public'),
         make_option('--validated', action='store_true', dest='validated', default=0, help='Validate photoset'),
+        make_option('--create_set', action='store_true', dest='create_set', default=0, help='Create photoset'),
         make_option('--replace', action='store_true', dest='replace', default=0, help='Replace photoset list with local file list'),
         make_option('--directory', action='store', dest='directory', default=False, help='Full path to directory to upload'),
     )
 
     def handle(self, *args, **options):
 
-        set_options(self, options, ['all', 'dry', 'public', 'directory', 'validated', 'replace'])
+        set_options(self, options, ['all', 'dry', 'public', 'directory', 'validated', 'replace', 'create_set'])
 
         if self.all:
             photo_dir = settings.PHOTO_DIR.format(self.user.username)
@@ -59,7 +61,9 @@ class Command(BaseCommand):
                         except Exception, e:
                             context = self.flickr.get_photo_context(photo)
                             self.stdout.write('==== Photo already in PhotoSet [{0}][{1}][{2}]'.format(photo, context.get('title'), context.get('photoset_id')))
-                    self.stdout.write('Successfully Validated PhotoSet "{0}"'.format(photoset))
+                        else:
+                            self.count += 1
+                    self.stdout.write('Successfully Validated {0} Photos of PhotoSet "{1}"'.format(self.count, photoset))
                 except PhotoSet.DoesNotExist:
                     raise CommandError('PhotoSet "{0}" does not exist'.format(slug))
         elif self.directory:
@@ -72,7 +76,7 @@ class Command(BaseCommand):
             for directory in args:
                 try:
                     self.get_directory_listing(directory)
-                    self.stdout.write('Successfully Uploaded PhotoSet Directory "{0}"'.format(directory))
+                    self.stdout.write('Successfully Uploaded {0} Photos of PhotoSet Directory "{1}"'.format(self.count, directory))
                 except PhotoSet.DoesNotExist:
                     raise CommandError('PhotoSet Directory "{0}" does not exist'.format(directory))
 
@@ -102,6 +106,7 @@ class Command(BaseCommand):
                                         photoset.total = photoset.total + 1
                                     except Exception, e:
                                         self.stdout.write('==== Failed to create PhotoSet [{0}]'.format(photoset))
+                                        self.stdout.write('==== Error [{0}]'.format(e))
                                 elif img_created or img_uploaded or self.validated:
                                     try:
                                         self.flickr.add_photo_to_photoset(photo, photoset)
@@ -209,6 +214,7 @@ class Command(BaseCommand):
                 photo.save()
                 self.stdout.write('==== Setting Permissions [{0}]'.format(photo))
                 photo.set_permissions(0, 1, 1)
+                self.count += 1
         return photo, created, uploaded
 
     def create_thumbnail(self, dirname, filename, create=False):
