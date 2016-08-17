@@ -4,6 +4,7 @@ hashlib
 markdown
 django
 django-filter
+django-import-export
 djangorestframework
 django_compressor
 Fabric
